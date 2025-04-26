@@ -15,25 +15,14 @@
 """
 ========================================================================
 ŁĄCZA:
-    -> s1 - s2 (200ms, 200 Mbps)
-    -> s1 - s3 (50ms, 50 Mbps)
-    -> s1 - s4 (10ms, 10 Mbps)
+    -> s1 - s2 (200ms)
+    -> s1 - s3 (50ms)
+    -> s1 - s4 (10ms)
 
 2 INTENCJE:
     1) h1-h4: maksymalne opoźnienie = 60ms
     2) h2-h5: maksymalne opoźnienie = 15ms
     3) reszta ruchu w sieci
-
-ZASADY:
-    -> połączenia intencji mają priotytet - 1) idzie przez s1s3, 2) przez s1s4 - w ten sposób zapewnimy spełnienie priorytetu i nie będziemy kombinować
-    -> dobór pozostałych połączeń opiera sie na zasadzie losowania ruletkowego (im większe opóźnienie, tym większa szansa, że się trafi)   
-        -> jeżeli, na którymś z łącz s1s3/s1s4 będzie BW równe 70% max BW, to zostaje wyłączone z losowania - zostawiamy miejsce na priorytet
-    -> na bieżąco należy wyliczać przepustowości na łączach
-
-CO ZROBIĆ:
-    -> funkcje do sprawdzania, czy dany ruch jest priorytetowy
-    -> co sekundę obliczany jest bitrate na podstawie port stats
-    -> kod w PacketIn do obliczania odpowiedniego wyjścia dla danego strumienia
 ========================================================================
 """
 
@@ -123,7 +112,10 @@ def roulette_pick():
     
     
 def is_priority_flow(ip_src, ip_dst):
+    global bitrate_s1_s3, bitrate_s1_s4
     if ip_src == "10.0.0.1" and ip_dst == "10.0.0.4":
+        if (bitrate_s1_s3 > 0.9*S1_S3_BW) && (bitrate_s1_s4 < 0.9*S1_S4_BW):
+             return "s1s4"
         return "s1s3"  
     if ip_src == "10.0.0.2" and ip_dst == "10.0.0.5":
         return "s1s4"
